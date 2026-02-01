@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Productivity Tracker",
-  "version": "1.0",
+  "version": "1.1",
   "description": "Track and rate your website visits with excuses",
+  "homepage_url": "https://github.com/james-hub-1234/productivity-tracker-extension",
   "permissions": [
     "tabs",
     "storage",
