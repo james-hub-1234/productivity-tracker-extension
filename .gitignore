@@ -1,0 +1,29 @@
+# OS Files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Test files
+test/
+*.test.js
+
+# Build files (if you add build process later)
+dist/
+build/
+node_modules/
+
+# Backup files
+*.bak
+*~
+
+# Chrome extension specific
+*.pem
+*.crx
