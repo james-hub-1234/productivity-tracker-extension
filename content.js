@@ -43,14 +43,9 @@ function showRatingPopup(url, hostname) {
         </div>
 
         <div class="pt-excuse-section" id="pt-excuse-section" style="display: none;">
-          <label>Additional notes (optional)</label>
+          <label id="pt-excuse-label">Additional notes (optional)</label>
           <textarea id="pt-excuse" placeholder="e.g., 'avoiding that big presentation', 'looking for weekend plans'"></textarea>
           <button class="pt-submit" id="pt-submit-btn">Submit & Continue</button>
-        </div>
-
-        <div class="pt-productive-message" id="pt-productive-message" style="display: none;">
-          <p>✅ Great! Stay focused.</p>
-          <button class="pt-submit" id="pt-productive-btn">Continue</button>
         </div>
       </div>
     </div>
@@ -245,26 +240,31 @@ function showRatingPopup(url, hostname) {
       background: #45a049;
     }
     
-    .pt-productive-message {
-      text-align: center;
-      padding: 20px 0;
-    }
-    
-    .pt-productive-message p {
-      font-size: 18px;
-      color: #4CAF50;
-      margin-bottom: 16px;
-    }
   `;
   overlay.appendChild(style);
   document.body.appendChild(overlay);
+
+  // Show average rating for this site if prior visits exist
+  chrome.storage.local.get(['visits'], (result) => {
+    const visits = result.visits || [];
+    const siteVisits = visits.filter(v => v.hostname === hostname && v.rating !== null);
+    if (siteVisits.length > 0) {
+      const avg = siteVisits.reduce((sum, v) => sum + v.rating, 0) / siteVisits.length;
+      const avgDiv = document.createElement('p');
+      avgDiv.style.cssText = 'color: #888; font-size: 13px; margin-bottom: 16px;';
+      avgDiv.textContent = `Your avg rating for this site: ${avg.toFixed(1)}/5`;
+      const siteEl = overlay.querySelector('.pt-site');
+      if (siteEl) siteEl.insertAdjacentElement('afterend', avgDiv);
+    }
+  });
 
   // Add event listeners
   let selectedRating = null;
   let selectedCategories = [];
 
-  // Close button
+  // Close button - save as unrated visit before closing
   document.getElementById('pt-close-btn').addEventListener('click', () => {
+    saveRating(url, hostname, null, [], null);
     overlay.remove();
   });
 
@@ -278,17 +278,18 @@ function showRatingPopup(url, hostname) {
       btn.classList.add('selected');
       selectedRating = parseInt(btn.dataset.rating);
       
-      // Show categories and excuse section if rating is 1-3
+      // Show categories for ratings 1-3, notes textarea for all ratings
       if (selectedRating <= 3) {
         loadCategories();
         document.getElementById('pt-categories-section').style.display = 'block';
-        document.getElementById('pt-excuse-section').style.display = 'block';
-        document.getElementById('pt-productive-message').style.display = 'none';
+        document.getElementById('pt-excuse-label').textContent = 'Additional notes (optional)';
+        document.getElementById('pt-excuse').placeholder = "e.g., 'avoiding that big presentation', 'looking for weekend plans'";
       } else {
         document.getElementById('pt-categories-section').style.display = 'none';
-        document.getElementById('pt-excuse-section').style.display = 'none';
-        document.getElementById('pt-productive-message').style.display = 'block';
+        document.getElementById('pt-excuse-label').textContent = 'Notes (optional)';
+        document.getElementById('pt-excuse').placeholder = "e.g., 'productive research session', 'found what I needed'";
       }
+      document.getElementById('pt-excuse-section').style.display = 'block';
     });
   });
 
@@ -334,10 +335,10 @@ function showRatingPopup(url, hostname) {
     });
   }
 
-  // Submit button (for low productivity)
+  // Submit button (for all ratings)
   document.getElementById('pt-submit-btn').addEventListener('click', () => {
     const excuse = document.getElementById('pt-excuse').value || 'No additional notes';
-    
+
     saveRating(url, hostname, selectedRating, selectedCategories, excuse);
     overlay.remove();
   });
@@ -348,12 +349,6 @@ function showRatingPopup(url, hostname) {
       e.preventDefault();
       document.getElementById('pt-submit-btn').click();
     }
-  });
-
-  // Continue button (for high productivity)
-  document.getElementById('pt-productive-btn').addEventListener('click', () => {
-    saveRating(url, hostname, selectedRating, [], 'Productive visit');
-    overlay.remove();
   });
 }
 

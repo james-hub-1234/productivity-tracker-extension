@@ -243,8 +243,8 @@ async function getInsights() {
         insights.push(`⏰ You've spent **${minutes} minutes** on unproductive sites`);
       }
       
-      // Insight 3: Most common excuse
-      const excuses = visits.map(v => v.excuse).filter(e => e && e !== 'Productive visit');
+      // Insight 3: Most common excuse (filter out null/dismissed)
+      const excuses = visits.map(v => v.excuse).filter(e => e && e !== 'Productive visit' && e !== 'No additional notes');
       const excuseCounts = {};
       excuses.forEach(e => {
         const lower = e.toLowerCase();
@@ -278,7 +278,10 @@ async function getInsights() {
       }
       
       // Insight 5: Productivity trend
-      const avgRating = visits.reduce((sum, v) => sum + v.rating, 0) / visits.length;
+      const ratedVisits = visits.filter(v => v.rating !== null);
+      const avgRating = ratedVisits.length > 0
+        ? ratedVisits.reduce((sum, v) => sum + v.rating, 0) / ratedVisits.length
+        : 0;
       if (avgRating < 2.5) {
         insights.push(`📉 Your average productivity rating is **${avgRating.toFixed(1)}/5** - time to make a change?`);
       } else if (avgRating > 3.5) {
